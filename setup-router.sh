@@ -40,6 +40,8 @@ echo "Hostapd configuration complete."
 
 echo "Configuring Hostapd Daemon..."
 echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee -a /etc/default/hostapd > /dev/null
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
 echo "Hostapd Daemon configuration complete."
 
 echo "Configuring DNSMasq..."
