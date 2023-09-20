@@ -2,6 +2,25 @@
 
 set -e # Exit on any error
 
+# Function to check if a command exists
+command_exists () {
+  type "$1" &> /dev/null;
+}
+
+# Check if tcpdump is installed, if not install it
+if ! command_exists tcpdump ; then
+  echo "tcpdump not found. Installing..."
+  sudo apt-get update
+  sudo apt-get install -y tcpdump
+fi
+
+# Check if tshark is installed, if not install it
+if ! command_exists tshark ; then
+  echo "tshark not found. Installing..."
+  sudo apt-get update
+  sudo apt-get install -y tshark
+fi
+
 # Directory to save the capture and backup files
 CAPTURE_DIR="/path/to/save/pcap_files"
 CSV_DIR="/path/to/save/csv_files"
