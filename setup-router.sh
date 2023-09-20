@@ -1,22 +1,25 @@
 #!/bin/bash
+set -e  # Exit the script if any command fails
 
-# Function to check the last command's exit status
-check_error() {
-  if [ $? -ne 0 ]; then
-    echo "Error: $1 failed. Exiting..."
-    exit 1
-  fi
-}
+echo "Starting to update system..."
+if ! sudo apt-get update; then
+  echo "Failed to update packages"
+  exit 1
+fi
+if ! sudo apt-get upgrade -y; then
+  echo "Failed to upgrade packages"
+  exit 1
+fi
+echo "System update complete."
 
-# Update and Upgrade System
-sudo apt-get update && sudo apt-get upgrade -y
-check_error "System update and upgrade"
+echo "Installing hostapd and dnsmasq..."
+if ! sudo apt install -y hostapd dnsmasq; then
+  echo "Failed to install required packages"
+  exit 1
+fi
+echo "Installation complete."
 
-# Install Necessary Software
-sudo apt install -y hostapd dnsmasq
-check_error "Software installation"
-
-# Configure Hostapd
+echo "Configuring Hostapd..."
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<EOL
 interface=wlan0
 driver=nl80211
@@ -33,13 +36,13 @@ wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
 EOL
-check_error "Hostapd configuration"
+echo "Hostapd configuration complete."
 
-# Configure Hostapd Daemon
+echo "Configuring Hostapd Daemon..."
 echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee -a /etc/default/hostapd > /dev/null
-check_error "Hostapd Daemon configuration"
+echo "Hostapd Daemon configuration complete."
 
-# Configure DNSMasq
+echo "Configuring DNSMasq..."
 sudo tee /etc/dnsmasq.conf > /dev/null <<EOL
 interface=wlan0
 bind-dynamic
@@ -47,29 +50,30 @@ domain-needed
 bogus-priv
 dhcp-range=192.168.20.100,192.168.20.200,255.255.255.0,12h
 EOL
-check_error "DNSMasq configuration"
+echo "DNSMasq configuration complete."
 
-# Configure DHCP Server
+echo "Configuring DHCP Server..."
 sudo tee -a /etc/dhcpcd.conf > /dev/null <<EOL
 nohook wpa_supplicant
 interface wlan0
 static ip_address=192.168.20.10/24
 static routers=192.168.20.1
 EOL
-check_error "DHCP Server configuration"
+echo "DHCP Server configuration complete."
 
-# Enable IP Forwarding
+echo "Enabling IP Forwarding..."
 echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf > /dev/null
 sudo sysctl -p
-check_error "IP Forwarding enable"
+echo "IP Forwarding enabled."
 
-# Add NAT rules to iptables
+echo "Configuring NAT rules..."
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
-check_error "NAT rules configuration"
+echo "NAT rules configuration complete."
 
-# Add iptables to rc.local for persistence
+echo "Configuring Iptables persistence..."
 echo "iptables-restore < /etc/iptables.ipv4.nat" | sudo tee -a /etc/rc.local > /dev/null
-check_error "Iptables persistence"
+echo "Iptables persistence complete."
 
-echo "Configuration completed successfully."
+echo "Setup complete. Your Raspberry Pi should now function as a router."
+
