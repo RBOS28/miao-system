@@ -40,8 +40,22 @@ echo "Hostapd configuration complete."
 
 echo "Configuring Hostapd Daemon..."
 echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' | sudo tee -a /etc/default/hostapd > /dev/null
-sudo systemctl unmask hostapd
-sudo systemctl enable hostapd
+if systemctl is-enabled --quiet hostapd; then
+  echo "hostapd service is already enabled"
+else
+  if systemctl is-active --quiet hostapd; then
+    echo "hostapd service is running"
+  else
+    if systemctl is-failed --quiet hostapd; then
+      sudo systemctl reset-failed hostapd
+    fi
+    if systemctl is-enabled --quiet hostapd; then
+      sudo systemctl disable hostapd
+    fi
+	sudo systemctl unmask hostapd
+	sudo systemctl enable hostapd
+  fi
+fi 
 echo "Hostapd Daemon configuration complete."
 
 echo "Configuring DNSMasq..."
