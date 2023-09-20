@@ -12,6 +12,13 @@ if ! sudo apt-get upgrade -y; then
 fi
 echo "System update complete."
 
+echo "Setting Wi-Fi country to Malaysia..."
+if ! sudo raspi-config nonint do_wifi_country MY; then
+  echo "Failed to set Wi-Fi country"
+  exit 1
+fi
+echo "Wi-Fi country set to Malaysia."
+
 echo "Installing hostapd and dnsmasq..."
 if ! sudo apt install -y hostapd dnsmasq; then
   echo "Failed to install required packages"
