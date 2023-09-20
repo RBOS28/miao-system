@@ -105,7 +105,11 @@ echo "NAT rules configuration complete."
 
 # Configuring iptables persistence
 echo "Configuring Iptables persistence..."
-echo "iptables-restore < /etc/iptables.ipv4.nat" | sudo tee -a /etc/rc.local > /dev/null
+if grep -q "iptables-restore < /etc/iptables.ipv4.nat" /etc/rc.local; then
+  echo "Iptables persistence already configured."
+else
+  sudo sed -i '/^exit 0/i\iptables-restore < /etc/iptables.ipv4.nat' /etc/rc.local
+fi
 echo "Iptables persistence complete."
 
 # Restart necessary services
