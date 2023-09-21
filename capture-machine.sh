@@ -32,13 +32,13 @@ mkdir -p $CSV_DIR
 mkdir -p $BACKUP_DIR
 
 # List of inteferences to capture ons
-INTERFACES=("eth0" "wlan0")  # Array of interfaces
+INTERFACES=("eth0" "wlan0") 
 
 # Packet capture parameters
-PACKET_COUNT=1000  # Set the number of packets you want to capture
+PACKET_COUNT=1000 
 
 for INTERFACE in "${INTERFACES[@]}"; do
-  # File names
+  # File name
   PCAP="$CAPTURE_DIR/${INTERFACE}_traffic.pcap"
   CSV="$CSV_DIR/${INTERFACE}_traffic.csv"
   BACKUP="$BACKUP_DIR/${INTERFACE}_traffic_backup.pcap"
@@ -75,8 +75,13 @@ for INTERFACE in "${INTERFACES[@]}"; do
     -E quote=d \
     -E occurrence=f > "$CSV"; then
     echo "Failed to convert PCAP to CSV for $INTERFACE."
-    continue
+    ALL_SUCCESS=false
   fi
 done
 
-echo "Data collection, backup, and conversion to CSV completed."
+if [ "$ALL_SUCCESS" = true ]; then
+  echo "Data collection, backup, and conversion to CSV completed."
+else
+  echo "Some operations failed. Check the log for details."
+fi
+
