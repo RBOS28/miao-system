@@ -13,10 +13,10 @@ LOG_DIR="$HOME/miao-system"
 LOG_FILE="$LOG_DIR/log-file.log"
 
 # Create log directory if it doesn't exist
-mkdir -p $LOG_DIR 
+sudo mkdir -p $LOG_DIR 
 
 # Create or truncate the log file
-: > $LOG_FILE 
+sudo : > $LOG_FILE 
 
 # Add debugging information to log file
 echo "About to create log directory and file..." | tee -a $LOG_FILE
