@@ -41,12 +41,13 @@ sudo apt-get upgrade -y
 echo "System update complete." | sudo tee -a $LOG_FILE
 
 # Directory to save the capture and backup files
-CAPTURE_DIR="/$HOME/miao-system/pcap_files"
-CSV_DIR="/$HOME/miao-system/csv_files"
-BACKUP_DIR="/$HOME/miao-system/backup_pcap_files"
+CAPTURE_DIR="$HOME/miao-system/pcap_files"
+CSV_DIR="$HOME/miao-system/csv_files"
+BACKUP_DIR="$HOME/miao-system/backup_pcap_files"
 
 # Make sure the directories exist
 sudo mkdir -p $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
+sudo chmod 777 $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
 
 # List of interfaces to capture on
 INTERFACES=("eth0" "wlan0")
@@ -72,7 +73,7 @@ for INTERFACE in "${INTERFACES[@]}"; do
   sudo cp $PCAP $BACKUP
 
   # Convert the PCAP to CSV format
-  if ! tshark -r "$PCAP" -T fields -e ip.src -e ip.dst -E header=y -E separator=, > "$CSV"; then
+  if ! sudo tshark -r "$PCAP" -T fields -e ip.src -e ip.dst -E header=y -E separator=, > "$CSV"; then
     echo "Failed to convert PCAP to CSV for $INTERFACE." | sudo tee -a $LOG_FILE
     ALL_SUCCESS=false
   fi
