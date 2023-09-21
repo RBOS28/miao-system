@@ -3,14 +3,9 @@
 # Exit on any error
 set -e
 
-# Log info function for easy logging
-log_info() {
-  echo "$1" | sudo tee -a $LOG_FILE
-}
-
 # Function to check if a command exists
-command_exists() {
-  type "$1" &> /dev/null;
+command_exists () {
+  type "$1" &> /dev/null
 }
 
 # Define log file
@@ -19,47 +14,46 @@ LOG_FILE="$LOG_DIR/log-file.log"
 
 # Create log directory if it doesn't exist
 sudo mkdir -p $LOG_DIR
+sudo chmod 777 $LOG_DIR
 
 # Create or truncate the log file
-sudo : > $LOG_FILE
+: > $LOG_FILE
 
-log_info "About to create log directory and file..."
-log_info "Log directory and file should now be created."
+# Check if tcpdump is installed, if not install it
+if ! command_exists tcpdump ; then
+  echo "tcpdump not found. Installing..." | sudo tee -a $LOG_FILE
+  sudo apt-get update
+  sudo apt-get install -y tcpdump
+fi
 
-# Check if tcpdump and tshark are installed, if not install them
-for tool in tcpdump tshark; do
-  if ! command_exists $tool; then
-    log_info "$tool not found. Installing..."
-    sudo apt-get update
-    sudo apt-get install -y $tool
-  fi
-done
+# Check if tshark is installed, if not install it
+if ! command_exists tshark ; then
+  echo "tshark not found. Installing..." | sudo tee -a $LOG_FILE
+  sudo apt-get update
+  sudo apt-get install -y tshark
+fi
 
 # Update and Upgrade
-log_info "Starting to update system..."
-if ! sudo apt-get update; then
-  log_info "Failed to update packages"
-  exit 1
-fi
-if ! sudo apt-get upgrade -y; then
-  log_info "Failed to upgrade packages"
-  exit 1
-fi
-log_info "System update complete."
+echo "Starting to update system..." | sudo tee -a $LOG_FILE
+sudo apt-get update
+sudo apt-get upgrade -y
 
-# Directory paths
-CAPTURE_DIR="/path/to/save/pcap_files"
-CSV_DIR="/path/to/save/csv_files"
-BACKUP_DIR="/path/to/save/backup_pcap_files"
+echo "System update complete." | sudo tee -a $LOG_FILE
 
-# Ensure the directories exist
-for dir in $CAPTURE_DIR $CSV_DIR $BACKUP_DIR; do
-  sudo mkdir -p $dir
-done
+# Directory to save the capture and backup files
+CAPTURE_DIR="/$HOME/miao-system/pcap_files"
+CSV_DIR="/$HOME/miao-system/csv_files"
+BACKUP_DIR="/$HOME/miao-system/backup_pcap_files"
+
+# Make sure the directories exist
+sudo mkdir -p $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
 
 # List of interfaces to capture on
 INTERFACES=("eth0" "wlan0")
+
+# Packet capture parameters
 PACKET_COUNT=1000
+
 ALL_SUCCESS=true
 
 for INTERFACE in "${INTERFACES[@]}"; do
@@ -69,42 +63,24 @@ for INTERFACE in "${INTERFACES[@]}"; do
 
   # Capture packets
   if ! sudo tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
-    log_info "Failed to capture packets on $INTERFACE."
+    echo "Failed to capture packets on $INTERFACE." | sudo tee -a $LOG_FILE
     ALL_SUCCESS=false
     continue
   fi
 
   # Backup the PCAP file
-  if [ -e $PCAP ]; then
-    sudo cp $PCAP $BACKUP
-  else
-    log_info "No PCAP file found for $INTERFACE to backup."
-    ALL_SUCCESS=false
-  fi
+  sudo cp $PCAP $BACKUP
 
   # Convert the PCAP to CSV format
-  if ! tshark -r "$PCAP" -T fields \
-      -e ip.src \
-      -e ip.dst \
-      -e tcp.srcport \
-      -e tcp.dstport \
-      -e udp.srcport \
-      -e udp.dstport \
-      -e frame.time_epoch \
-      -e _ws.col.Protocol \
-      -e frame.len \
-      -E header=y \
-      -E separator=, \
-      -E quote=d \
-      -E occurrence=f > "$CSV"; then
-    log_info "Failed to convert PCAP to CSV for $INTERFACE."
+  if ! tshark -r "$PCAP" -T fields -e ip.src -e ip.dst -E header=y -E separator=, > "$CSV"; then
+    echo "Failed to convert PCAP to CSV for $INTERFACE." | sudo tee -a $LOG_FILE
     ALL_SUCCESS=false
   fi
 done
 
-if $ALL_SUCCESS; then
-  log_info "Data collection, backup, and conversion to CSV completed."
+if [ "$ALL_SUCCESS" = true ]; then
+  echo "Data collection, backup, and conversion to CSV completed." | sudo tee -a $LOG_FILE
 else
-  log_info "Some operations failed. Check the log for details."
+  echo "Some operations failed. Check the log for details." | sudo tee -a $LOG_FILE
 fi
 
