@@ -82,13 +82,12 @@ for INTERFACE in "${INTERFACES[@]}"; do
     -e udp.dstport \
     -e frame.time_epoch \
     -e _ws.col.Protocol \
-     # -e frame.len \
+    -e frame.len \
     -e dns.qry.name \
     -e http.request.method \
     -e http.request.uri \
     -e http.response.code \
     -e frame.interface_id \
-    -e frame.direction \
     -e frame.cap_len \
     -E header=y \
     -E separator=, \
