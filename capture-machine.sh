@@ -1,22 +1,32 @@
 #!/bin/bash
 
+# Exit on any error
+set -e
+
 # Function to check if a command exists
 command_exists () {
   type "$1" &> /dev/null;
 }
 
-# Exit on any error
-set -e 
+# Check essential command 
+if ! command_exists tcpdump || ! command_exists tshark; then
+  echo "Essential commands not found. Installing..."
+  sudo apt-get update && sudo apt-get install -y tcpdump tshark
+fi
 
 # Define log file
 LOG_DIR="$HOME/miao-system"
 LOG_FILE="$HOME/miao-system/log-file.log"
 
 # Create log directory if it doesn't exist
-mkdir -p $LOG_DIR
+mkdir -p $LOG_DIR 2>&1 | tee -a $LOG_FILE
 
 # Create or truncate the log file
-: > $LOG_FILE
+: > $LOG_FILE 2>&1 | tee -a $LOG_FILE
+
+# Add debugging information to log file
+echo "About to create log directory and file..." 2>&1 | tee -a $LOG_FILE
+echo "Log directory and file shuold now be created." 2>&1 | tee -a $LOG_FILE 
 
 # Check if tcpdump is installed, if not install it
 if ! command_exists tcpdump ; then
