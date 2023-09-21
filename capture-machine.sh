@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ $EUID -ne 0 ]]; then
+    log_error "Please run this script as root or with sudo."
+    exit 1
+fi
+
 # Exit on any error
 set -e
 
@@ -11,6 +16,14 @@ command_exists () {
 # Define log file
 LOG_DIR="$HOME/miao-system"
 LOG_FILE="$LOG_DIR/log-file.log"
+
+log_info() {
+    echo "[INFO] $(date +'%Y-%m-%d %H:%M:%S'): $1" | sudo tee -a $LOG_FILE
+}
+
+log_error() {
+    echo "[ERROR] $(date +'%Y-%m-%d %H:%M:%S'): $1" | sudo tee -a $LOG_FILE
+}
 
 # Create log directory if it doesn't exist
 sudo mkdir -p $LOG_DIR
@@ -57,10 +70,18 @@ PACKET_COUNT=1000
 
 ALL_SUCCESS=true
 
+log_info "Cleaning up old files"
+sudo rm -rf $CAPTURE_DIR/* $CSV_DIR/* $BACKUP_DIR/*
+
 for INTERFACE in "${INTERFACES[@]}"; do
   PCAP="$CAPTURE_DIR/${INTERFACE}_traffic.pcap"
   CSV="$CSV_DIR/${INTERFACE}_traffic.csv"
   BACKUP="$BACKUP_DIR/${INTERFACE}_traffic_backup.pcap"
+
+ if ! ip link show $INTERFACE > /dev/null 2>&1; then
+    log_error "Interface $INTERFACE not found."
+    continue
+ fi
 
   # Capture packets
   if ! sudo tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
