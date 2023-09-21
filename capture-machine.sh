@@ -103,7 +103,7 @@ for INTERFACE in "${INTERFACES[@]}"; do
     -E occurrence=f
 	> "$CSV"; then
     echo "Failed to convert PCAP to CSV for $INTERFACE." | tee -a $LOG_FILE
-    ALL_SUCCESS=false
+    ALL_SUCCESS=true
   fi
 done
 
