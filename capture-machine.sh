@@ -8,25 +8,19 @@ command_exists () {
   type "$1" &> /dev/null;
 }
 
-# Check essential command 
-if ! command_exists tcpdump || ! command_exists tshark; then
-  echo "Essential commands not found. Installing..."
-  sudo apt-get update && sudo apt-get install -y tcpdump tshark
-fi
-
 # Define log file
 LOG_DIR="$HOME/miao-system"
-LOG_FILE="$HOME/miao-system/log-file.log"
+LOG_FILE="$LOG_DIR/log-file.log"
 
 # Create log directory if it doesn't exist
-mkdir -p $LOG_DIR 2>&1 | tee -a $LOG_FILE
+mkdir -p $LOG_DIR 
 
 # Create or truncate the log file
-: > $LOG_FILE 2>&1 | tee -a $LOG_FILE
+: > $LOG_FILE 
 
 # Add debugging information to log file
-echo "About to create log directory and file..." 2>&1 | tee -a $LOG_FILE
-echo "Log directory and file shuold now be created." 2>&1 | tee -a $LOG_FILE 
+echo "About to create log directory and file..." | tee -a $LOG_FILE
+echo "Log directory and file shuold now be created." | tee -a $LOG_FILE 
 
 # Check if tcpdump is installed, if not install it
 if ! command_exists tcpdump ; then
@@ -106,7 +100,8 @@ for INTERFACE in "${INTERFACES[@]}"; do
     -E header=y \
     -E separator=, \
     -E quote=d \
-    -E occurrence=f > "$CSV"; then
+    -E occurrence=f
+	> "$CSV"; then
     echo "Failed to convert PCAP to CSV for $INTERFACE." | tee -a $LOG_FILE
     ALL_SUCCESS=false
   fi
