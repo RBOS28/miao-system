@@ -9,7 +9,11 @@ command_exists () {
 set -e 
 
 # Define log file
-LOG_FILE="$HOME/miao-system/log-file"
+LOG_DIR="$HOME/miao-system"
+LOG_FILE="$HOME/miao-system/log-file.log"
+
+# Create log directory if it doesn't exist
+mkdir -p $LOG_DIR
 
 # Create or truncate the log file
 : > $LOG_FILE
