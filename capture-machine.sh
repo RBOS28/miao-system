@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Define log file
+LOG_DIR="$HOME/miao-system"
+LOG_FILE="$LOG_DIR/log-file.log"
+
+# Logging functions
+log_info() {
+    echo "[INFO] $(date +'%Y-%m-%d %H:%M:%S'): $1" | sudo tee -a $LOG_FILE
+}
+
+log_error() {
+    echo "[ERROR] $(date +'%Y-%m-%d %H:%M:%S'): $1" | sudo tee -a $LOG_FILE
+}
+
 if [[ $EUID -ne 0 ]]; then
     log_error "Please run this script as root or with sudo."
     exit 1
@@ -11,18 +24,6 @@ set -e
 # Function to check if a command exists
 command_exists () {
   type "$1" &> /dev/null
-}
-
-# Define log file
-LOG_DIR="$HOME/miao-system"
-LOG_FILE="$LOG_DIR/log-file.log"
-
-log_info() {
-    echo "[INFO] $(date +'%Y-%m-%d %H:%M:%S'): $1" | sudo tee -a $LOG_FILE
-}
-
-log_error() {
-    echo "[ERROR] $(date +'%Y-%m-%d %H:%M:%S'): $1" | sudo tee -a $LOG_FILE
 }
 
 # Create log directory if it doesn't exist
