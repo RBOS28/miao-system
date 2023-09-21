@@ -57,9 +57,9 @@ fi
 log "System update complete."
 
 # Directory to save the capture and backup files
-CAPTURE_DIR="/path/to/save/pcap_files"
-CSV_DIR="/path/to/save/csv_files"
-BACKUP_DIR="/path/to/save/backup_pcap_files"
+CAPTURE_DIR="/$HOME/miao-system/pcap_files"
+CSV_DIR="/$HOME/miao-system/csv_files"
+BACKUP_DIR="/$HOME/miao-system/backup_pcap_files"
 
 # Make sure the directories exist
 log "Creating capture, csv, and backup directories..."
