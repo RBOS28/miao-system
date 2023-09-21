@@ -1,25 +1,44 @@
 #!/bin/bash
 
-set -e # Exit on any error
-
 # Function to check if a command exists
 command_exists () {
   type "$1" &> /dev/null;
 }
 
+# Exit on any error
+set -e 
+
+# Define log file
+LOG_FILE="$HOME/miao-system/log-file"
+
+# Create or truncate the log file
+: > $LOG_FILE
+
 # Check if tcpdump is installed, if not install it
 if ! command_exists tcpdump ; then
-  echo "tcpdump not found. Installing..."
+  echo "tcpdump not found. Installing..." | tee -a $LOG_FILE
   sudo apt-get update
   sudo apt-get install -y tcpdump
 fi
 
 # Check if tshark is installed, if not install it
 if ! command_exists tshark ; then
-  echo "tshark not found. Installing..."
+  echo "tshark not found. Installing..." | tee -a $LOG_FILE
   sudo apt-get update
   sudo apt-get install -y tshark
 fi
+
+# Update and Upgrade
+echo "Starting to update system..." | tee -a $LOG_FILE
+if ! sudo apt-get update; then
+  echo "Failed to update packages" | tee -a $LOG_FILE
+  exit 1
+fi
+if ! sudo apt-get upgrade -y; then
+  echo "Failed to upgrade packages" | tee -a $LOG_FILE
+  exit 1
+fi
+echo "System update complete." | tee -a $LOG_FILE
 
 # Directory to save the capture and backup files
 CAPTURE_DIR="/path/to/save/pcap_files"
@@ -45,7 +64,7 @@ for INTERFACE in "${INTERFACES[@]}"; do
 
   # Capture packets
   if ! sudo tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
-    echo "Failed to capture packets on $INTERFACE."
+    echo "Failed to capture packets on $INTERFACE." | tee -a $LOG_FILE
     continue
   fi
 
@@ -74,14 +93,14 @@ for INTERFACE in "${INTERFACES[@]}"; do
     -E separator=, \
     -E quote=d \
     -E occurrence=f > "$CSV"; then
-    echo "Failed to convert PCAP to CSV for $INTERFACE."
+    echo "Failed to convert PCAP to CSV for $INTERFACE." | tee -a $LOG_FILE
     ALL_SUCCESS=false
   fi
 done
 
 if [ "$ALL_SUCCESS" = true ]; then
-  echo "Data collection, backup, and conversion to CSV completed."
+  echo "Data collection, backup, and conversion to CSV completed." | tee -a $LOG_FILE
 else
-  echo "Some operations failed. Check the log for details."
+  echo "Some operations failed. Check the log for details." | tee -a $LOG_FILE
 fi
 
