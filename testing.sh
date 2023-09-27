@@ -91,7 +91,14 @@ for INTERFACE in "${INTERFACES[@]}"; do
     # Capture packets
     log_info "Starting packet capture on $INTERFACE..."
     if ! sudo tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
-        log_error "Failed to capture packets on $INTERFACE."
+        log_error "Failed to capture packets on $INTERFACE. Error: $?"
+        ALL_SUCCESS=false
+        continue
+    fi
+
+	# After tcpdump
+	 if [ ! -f "$PCAP" ]; then
+        log_error "PCAP file not created for $INTERFACE."
         ALL_SUCCESS=false
         continue
     fi
@@ -99,9 +106,9 @@ for INTERFACE in "${INTERFACES[@]}"; do
     # Backup the PCAP file
     log_info "Backing up pcap for $INTERFACE..."
     if ! sudo cp $PCAP $BACKUP 2>> $LOG_FILE; then
-    log_error "Failed to backup PCAP for $INTERFACE."
-    ALL_SUCCESS=false
-fi
+    	log_error "Failed to backup PCAP for $INTERFACE."
+    	ALL_SUCCESS=false
+	fi
 
     # Convert the PCAP to CSV format
     log_info "Starting pcap to csv conversion for $INTERFACE..."
@@ -126,6 +133,12 @@ fi
         -E quote=d \
         -E occurrence=f > "$CSV"; then
         log_error "Failed to convert PCAP to CSV for $INTERFACE."
+        ALL_SUCCESS=false
+    fi
+
+	 # After tshark
+    if [ ! -f "$CSV" ]; then
+        log_error "CSV file not created for $INTERFACE."
         ALL_SUCCESS=false
     fi
 done
