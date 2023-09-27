@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # Define directories and files
-LOG_DIR="$HOME/miao-system"
-LOG_FILE="$LOG_DIR/log-file.log"
-CAPTURE_DIR="$HOME/miao-system/pcap_files"
-CSV_DIR="$HOME/miao-system/csv_files"
-BACKUP_DIR="$HOME/miao-system/backup_pcap_files"
+BASE_DIR="$HOME/miao-system"
+LOG_DIR="$BASE_DIR/logs"
+LOG_FILE="$LOG_DIR/system-log.log"
+CAPTURE_DIR="$BASE_DIR/pcap_files"
+CSV_DIR="$BASE_DIR/csv_files"
+BACKUP_DIR="$BASE_DIR/backup_pcap_files"
 INTERFACES=("eth0" "wlan0")
 PACKET_COUNT=1000
 
@@ -39,22 +40,25 @@ sudo chmod 777 $LOG_DIR $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
 # Truncate the log file
 : > $LOG_FILE
 
-log_info "Checking for required utilities..."
+log_info "Starting comprehensive system script..."
 
-# Install tcpdump and tshark if not installed
+# Update system and install necessary packages
+log_info "Updating system and installing necessary packages..."
+sudo apt-get update
+sudo apt-get upgrade -y
 for cmd in tcpdump tshark; do
     if ! command_exists $cmd; then
         log_info "$cmd not found. Installing..."
-        sudo apt-get update
         sudo apt-get install -y $cmd
     else
         log_info "$cmd already installed."
     fi
 done
 
-log_info "Starting packet capture and conversion..."
+log_info "System update and package installation completed."
 
 # Iterate over each interface and perform packet capture and conversion
+log_info "Starting packet capture and conversion..."
 for INTERFACE in "${INTERFACES[@]}"; do
     PCAP="$CAPTURE_DIR/${INTERFACE}_traffic.pcap"
     CSV="$CSV_DIR/${INTERFACE}_traffic.csv"
@@ -93,5 +97,5 @@ for INTERFACE in "${INTERFACES[@]}"; do
     log_info "Packet capture and conversion for $INTERFACE completed successfully."
 done
 
-log_info "Script execution completed."
+log_info "Comprehensive system script execution completed."
 
