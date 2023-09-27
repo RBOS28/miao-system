@@ -78,6 +78,14 @@ ALL_SUCCESS=true
 log_info "Cleaning up old files."
 sudo rm -rf $CAPTURE_DIR/* $CSV_DIR/* $BACKUP_DIR/*
 
+# Before trying to create PCAP and CSV files
+AVAILABLE_SPACE=$(df --output=avail "$CAPTURE_DIR" | tail -n 1)
+if [ $AVAILABLE_SPACE -lt 1000000 ]; then  # Adjust the space threshold as needed
+    log_error "Not enough disk space available in $CAPTURE_DIR."
+    ALL_SUCCESS=false
+    continue
+fi
+
 for INTERFACE in "${INTERFACES[@]}"; do
     PCAP="$CAPTURE_DIR/${INTERFACE}_traffic.pcap"
     CSV="$CSV_DIR/${INTERFACE}_traffic.csv"
@@ -88,7 +96,14 @@ for INTERFACE in "${INTERFACES[@]}"; do
         continue
     fi
 
-    # Capture packets
+	# Before running tcpdump
+	if ! ip link show $INTERFACE | grep -q "UP"; then
+    	log_error "Interface $INTERFACE is down. Please ensure the interface is up and has traffic flowing through it."
+    	ALL_SUCCESS=false
+    	continue
+	fi
+
+	# Capture packets
     log_info "Starting packet capture on $INTERFACE..."
     if ! sudo tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
         log_error "Failed to capture packets on $INTERFACE. Error: $?"
