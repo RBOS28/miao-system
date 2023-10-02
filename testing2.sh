@@ -27,11 +27,13 @@ command_exists () {
 }
 
 # Create log directory if it doesn't exist
-sudo mkdir -p $LOG_DIR
-sudo chmod 777 $LOG_DIR
+if [ ! -d "$LOG_DIR" ]; then
+  sudo mkdir -p "$LOG_DIR"
+  sudo chmod 777 "$LOG_DIR"
+fi
 
 # Create or truncate the log file
-: > $LOG_FILE
+: > "$LOG_FILE"
 
 log_info "Checking for required utilities..."
 
@@ -63,9 +65,21 @@ CAPTURE_DIR="$HOME/miao-system/pcap_files"
 CSV_DIR="$HOME/miao-system/csv_files"
 BACKUP_DIR="$HOME/miao-system/backup_pcap_files"
 
-# Make sure the directories exist
-sudo mkdir -p $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
-sudo chmod 777 $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
+# Create the directories if they don't exist
+if [ ! -d "$CAPTURE_DIR" ]; then
+  sudo mkdir -p "$CAPTURE_DIR"
+  sudo chmod 777 "$CAPTURE_DIR"
+fi
+
+if [ ! -d "$CSV_DIR" ]; then
+  sudo mkdir -p "$CSV_DIR"
+  sudo chmod 777 "$CSV_DIR"
+fi
+
+if [ ! -d "$BACKUP_DIR" ]; then
+  sudo mkdir -p "$BACKUP_DIR"
+  sudo chmod 777 "$BACKUP_DIR"
+fi
 
 # List of interfaces to capture on
 INTERFACES=("eth0" "wlan0")
@@ -76,7 +90,7 @@ PACKET_COUNT=1000
 ALL_SUCCESS=true
 
 log_info "Cleaning up old files."
-sudo rm -rf $CAPTURE_DIR/* $CSV_DIR/* <span class="math-inline">BACKUP\_DIR/\*
+sudo rm -rf "$CAPTURE_DIR"/* "$CSV_DIR"/* "<span class="math-inline">BACKUP\_DIR"/\*
 \# Before trying to create PCAP and CSV files
 AVAILABLE\_SPACE\=</span>(df --output=avail "$CAPTURE_DIR" | tail -n 1)
 if [ $AVAILABLE_SPACE -lt 1000000 ]; then # Adjust the space threshold as needed
@@ -95,27 +109,3 @@ for INTERFACE in "</span>{INTERFACES[@]}"; do
   fi
 
 	# Before running tcpdump
-	if ! ip link show $INTERFACE | grep -q "UP"; then
-  	log_error "Interface $INTERFACE is down. Please ensure the interface is up and has traffic flowing through it."
-  	ALL_SUCCESS=false
-  	continue
-	fi
-
-	# Capture packets
-  log_info "Starting packet capture on $INTERFACE..."
-  if ! sudo tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
-    log_error "Failed to capture packets on $INTERFACE. Error: $?"
-    ALL_SUCCESS=false
-    continue
-  fi
-
-	# After tcpdump
-	 if [ ! -f "$PCAP" ]; then
-    log_error "PCAP file not created for $INTERFACE."
-    ALL_SUCCESS=false
-    continue
-  fi
-
-  # Backup the PCAP file
-  log_info "Backing up pcap for $INTERFACE..."
-  if ! sudo cp $PCAP $BACKUP 2>> $LOG_FILE; then
