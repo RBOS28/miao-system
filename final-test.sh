@@ -1,4 +1,14 @@
-#!/bin/bash
+#!/bin/bashi
+
+# Determine the home directory
+if [[ $EUID -eq 0 ]]; then
+  HOME_DIR="/root"
+  if [ ! -z "$SUDO_USER" ]; then
+    HOME_DIR=$(eval echo ~$SUDO_USER)
+  fi
+else
+  HOME_DIR="$HOME"
+fi
 
 # Define log file
 LOG_DIR="$HOME/miao-system"
