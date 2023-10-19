@@ -1,22 +1,98 @@
 #!/bin/bash
 
-# Define directories and filenames
-BASE_DIR="$HOME/miao-system"
-PCAP_FILE="$BASE_DIR/captured_traffic.pcap"
-CSV_FILE="$BASE_DIR/captured_traffic.csv"
-BACKUP_PCAP="$BASE_DIR/backup_traffic.pcap"
+# Define log file
+LOG_DIR="$HOME/miao-system"
+LOG_FILE="$LOG_DIR/log-file.log"
 
-# Ensure the directory exists
-mkdir -p $BASE_DIR
+# Logging functions
+log_info() {
+    echo "[INFO] $(date +'%Y-%m-%d %H:%M:%S'): $1" | tee -a $LOG_FILE
+}
 
-# Capture packets using tcpdump
-sudo tcpdump -i eth0 -c 1000 -w $PCAP_FILE
+log_error() {
+    echo "[ERROR] $(date +'%Y-%m-%d %H:%M:%S'): $1" | tee -a $LOG_FILE
+}
 
-# Backup the PCAP file
-cp $PCAP_FILE $BACKUP_PCAP
+# Check for root user
+if [[ $EUID -ne 0 ]]; then
+    log_error "Please run this script as root or with sudo."
+    exit 1
+fi
 
-# Convert the .pcap file to .csv using tshark
-sudo tshark -r $PCAP_FILE -T fields \
+# Function to check if a command exists
+command_exists () {
+  type "$1" &> /dev/null
+}
+
+# Create log directory if it doesn't exist
+mkdir -p $LOG_DIR
+chmod 755 $LOG_DIR
+
+# Create or truncate the log file
+: > $LOG_FILE
+
+# Check if tcpdump is installed, if not install it
+if ! command_exists tcpdump ; then
+  log_info "tcpdump not found. Installing..."
+  apt-get update
+  apt-get install -y tcpdump
+fi
+
+# Check if tshark is installed, if not install it
+if ! command_exists tshark ; then
+  log_info "tshark not found. Installing..."
+  apt-get update
+  apt-get install -y tshark
+fi
+
+log_info "Starting to update system..."
+apt-get update
+apt-get upgrade -y
+log_info "System update complete."
+
+# Directories to save the capture and backup files
+CAPTURE_DIR="$HOME/miao-system/pcap_files"
+CSV_DIR="$HOME/miao-system/csv_files"
+BACKUP_DIR="$HOME/miao-system/backup_pcap_files"
+
+# Make sure the directories exist
+mkdir -p $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
+chmod 755 $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
+
+# List of interfaces to capture on
+INTERFACES=("eth0" "wlan0")
+
+# Packet capture parameters
+PACKET_COUNT=1000
+
+ALL_SUCCESS=true
+
+log_info "Cleaning up old files"
+rm -rf $CAPTURE_DIR/* $CSV_DIR/* $BACKUP_DIR/*
+
+for INTERFACE in "${INTERFACES[@]}"; do
+  PCAP="$CAPTURE_DIR/${INTERFACE}_traffic.pcap"
+  CSV="$CSV_DIR/${INTERFACE}_traffic.csv"
+  BACKUP="$BACKUP_DIR/${INTERFACE}_traffic_backup.pcap"
+
+  if ! ip link show $INTERFACE > /dev/null 2>&1; then
+    log_error "Interface $INTERFACE not found."
+    ALL_SUCCESS=false
+    continue
+  fi
+
+  # Capture packets
+  if ! tcpdump -i $INTERFACE -c $PACKET_COUNT -w "$PCAP"; then
+    log_error "Failed to capture packets on $INTERFACE."
+    ALL_SUCCESS=false
+    continue
+  fi
+
+  # Backup the PCAP file
+  cp $PCAP $BACKUP
+
+  # Convert the PCAP to CSV format
+  if ! tshark -r "$PCAP" -T fields \
     -e ip.src \
     -e ip.dst \
     -e tcp.srcport \
@@ -35,8 +111,15 @@ sudo tshark -r $PCAP_FILE -T fields \
     -E header=y \
     -E separator=, \
     -E quote=d \
-    -E occurrence=f > $CSV_FILE
+    -E occurrence=f > "$CSV"; then
+    log_error "Failed to convert PCAP to CSV for $INTERFACE."
+    ALL_SUCCESS=false
+  fi
+done
 
-echo "Files saved to $BASE_DIR
-
+if [ "$ALL_SUCCESS" = true ]; then
+  log_info "Data collection, backup, and conversion to CSV completed."
+else
+  log_error "Some operations failed. Check the log for details."
+fi
 
