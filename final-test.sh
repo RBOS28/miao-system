@@ -61,9 +61,9 @@ apt-get upgrade -y
 log_info "System update complete."
 
 # Directories to save the capture and backup files
-CAPTURE_DIR="$HOME_DIR/miao-system/pcap_files"
-CSV_DIR="$HOME_DIR/miao-system/csv_files"
-BACKUP_DIR="$HOME_DIR/miao-system/backup_pcap_files"
+CAPTURE_DIR="$HOME_DIR/miao-system/normal-traffic/pcap_files"
+CSV_DIR="$HOME_DIR/miao-system/normal-traffic/csv_files"
+BACKUP_DIR="$HOME_DIR/miao-system/normal-traffic/backup_pcap_files"
 
 # Make sure the directories exist
 mkdir -p $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
