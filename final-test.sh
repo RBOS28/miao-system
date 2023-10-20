@@ -1,4 +1,4 @@
-#!/bin/bashi
+#!/bin/bash
 
 # Determine the home directory
 if [[ $EUID -eq 0 ]]; then
@@ -11,7 +11,7 @@ else
 fi
 
 # Define log file
-LOG_DIR="$HOME/miao-system"
+LOG_DIR="$HOME_DIR/miao-system"
 LOG_FILE="$LOG_DIR/log-file.log"
 
 # Logging functions
@@ -61,9 +61,9 @@ apt-get upgrade -y
 log_info "System update complete."
 
 # Directories to save the capture and backup files
-CAPTURE_DIR="$HOME/miao-system/pcap_files"
-CSV_DIR="$HOME/miao-system/csv_files"
-BACKUP_DIR="$HOME/miao-system/backup_pcap_files"
+CAPTURE_DIR="$HOME_DIR/miao-system/pcap_files"
+CSV_DIR="$HOME_DIR/miao-system/csv_files"
+BACKUP_DIR="$HOME_DIR/miao-system/backup_pcap_files"
 
 # Make sure the directories exist
 mkdir -p $CAPTURE_DIR $CSV_DIR $BACKUP_DIR
