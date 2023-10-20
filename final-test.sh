@@ -11,7 +11,7 @@ else
 fi
 
 # Define log file
-LOG_DIR="$HOME_DIR/miao-system"
+LOG_DIR="$HOME_DIR/miao-system/normal-traffic/"
 LOG_FILE="$LOG_DIR/log-file.log"
 
 # Logging functions
