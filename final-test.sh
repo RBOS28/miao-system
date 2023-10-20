@@ -105,13 +105,18 @@ for INTERFACE in "${INTERFACES[@]}"; do
   if ! tshark -r "$PCAP" -T fields \
     -e ip.src \
     -e ip.dst \
+	-e ip.ttl \
     -e tcp.srcport \
     -e tcp.dstport \
+	-e tcp.flags \
+    -e tcp.seq \
+    -e tcp.ack \
     -e udp.srcport \
     -e udp.dstport \
     -e frame.time_epoch \
     -e _ws.col.Protocol \
     -e frame.len \
+	-e data.data \
     -e dns.qry.name \
     -e http.request.method \
     -e http.request.uri \
