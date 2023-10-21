@@ -1,46 +1,20 @@
 #!/bin/bash
 
-# Function to scan network and return number of hosts found
-scan_network() {
-    subnet=$1
-    nmap_output=$(nmap -sn $subnet)
-    echo "$nmap_output"
-    num_hosts=$(echo "$nmap_output" | grep "Nmap scan report for" | wc -l)
-    return $num_hosts
-}
+# Set the subnet for wlan0
+wlan0_subnet="192.168.80.0/24"
 
-# Function to identify operating systems and display it
-identify_os() {
-    subnet=$1
-    nmap -O $subnet
-}
+# Scan for hosts on wlan0
+echo "Scanning for hosts connected to wlan0..."
+nmap -sn $wlan0_subnet -oG - | awk '/Up$/{print $2}' > wlan0_hosts.txt
 
-hosts_found_eth0=0
-hosts_found_wlan0=0
+# Count and list the hosts connected to wlan0
+wlan0_count=$(wc -l < wlan0_hosts.txt)
+echo "Number of hosts connected to wlan0: $wlan0_count"
+echo "Hosts:"
+cat wlan0_hosts.txt
 
-# Scan the eth0 subnet
-echo "Scanning the network on eth0 (192.168.58.0/24)..."
-scan_network "192.168.58.0/24"
-hosts_found_eth0=$?
-if [ $hosts_found_eth0 -gt 0 ]; then
-    echo "Trying to identify operating systems on eth0..."
-    identify_os "192.168.58.0/24"
-fi
-
-echo "-------------------------------"
-
-# Scan the wlan0 subnet
-echo "Scanning the network on wlan0 (192.168.20.0/24)..."
-scan_network "192.168.20.0/24"
-hosts_found_wlan0=$?
-if [ $hosts_found_wlan0 -gt 0 ]; then
-    echo "Trying to identify operating systems on wlan0..."
-    identify_os "192.168.20.0/24"
-fi
-
-# Stop the script if no hosts were found on either subnet
-if [ $hosts_found_eth0 -eq 0 ] && [ $hosts_found_wlan0 -eq 0 ]; then
-    echo "No hosts found on either subnet. Exiting."
+# Check if no hosts are found and exit if so
+if [ $wlan0_count -eq 0 ]; then
+    echo "No hosts found. Exiting."
     exit 0
 fi
-
