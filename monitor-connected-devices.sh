@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the subnet for wlan0
-wlan0_subnet="192.168.80.0/24"
+wlan0_subnet="192.168.20.0/24"
 
 # Scan for hosts on wlan0
 echo "Scanning for hosts connected to wlan0..."
