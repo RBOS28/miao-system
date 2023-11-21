@@ -31,7 +31,7 @@ iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
 iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-# Allow specific services on wlan0 (if needed, like DHCP, DNS)
+# Allow specific services on wlan0 (like DHCP, DNS)
 iptables -A INPUT -i wlan0 -p udp --dport 53 -j ACCEPT  # DNS
 iptables -A INPUT -i wlan0 -p udp --dport 67 -j ACCEPT  # DHCP
 
