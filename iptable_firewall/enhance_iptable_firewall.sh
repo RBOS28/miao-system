@@ -35,6 +35,23 @@ iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -i wlan0 -p udp --dport 53 -j ACCEPT  # DNS
 iptables -A INPUT -i wlan0 -p udp --dport 67 -j ACCEPT  # DHCP
 
+# Advanced Security Rules
+# Rate limiting for ICMP and TCP SYN packets
+iptables -A INPUT -p icmp -m limit --limit 10/s --limit-burst 20 -j ACCEPT
+iptables -A INPUT -p tcp --syn -m connlimit --connlimit-above 15 -j REJECT
+
+# Port scan detection
+iptables -N port-scanning  
+iptables -A port-scanning -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s --limit-burst 2 -j RETURN
+iptables -A port-scanning -j DROP
+
+# Log and block invalid packets
+iptables -A INPUT -m conntrack --ctstate INVALID -j LOG --log-prefix "INVALID packet: "
+iptables -A INPUT -m conntrack --ctstate INVALID -j DROP  
+
+# Geo-blocking (example IP range)
+iptables -A INPUT -s 221.120.0.0/16 -j REJECT
+
 # Save the rules
 iptables-save > /etc/iptables/rules.v4
 
@@ -49,4 +66,14 @@ apt-get install -y iptables-persistent
 netfilter-persistent save
 
 echo "Network setup complete."
+
+# Optional: Add additional network configurations or services setup here
+
+# Restart network services to apply changes
+echo "Restarting network services..."
+systemctl restart networking
+systemctl restart hostapd
+systemctl restart dnsmasq
+
+echo "Script execution completed."
 
